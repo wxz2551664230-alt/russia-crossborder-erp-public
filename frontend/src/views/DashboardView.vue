@@ -1,0 +1,10 @@
+<script setup lang="ts">
+import { computed,onMounted,ref } from 'vue'; import { api } from '../api'; import { statusLabel } from '../status'
+const data=ref<any>({stages:[],items:[]}),loading=ref(true),filter=ref(''),page=ref(1)
+const rows=computed(()=>filter.value?data.value.items.filter((x:any)=>x.current.key===filter.value):data.value.items)
+async function load(){loading.value=true;try{data.value=await api.get(`/ozon-follow/automation?page=${page.value}&stage=${encodeURIComponent(filter.value)}`)}finally{loading.value=false}}
+async function selectStage(key:string){filter.value=filter.value===key?'':key;page.value=1;await load()}
+onMounted(load)
+</script>
+<template><div v-loading="loading" class="page-stack"><section class="flow-summary"><button v-for="stage in data.stages" :key="stage.key" :class="{active:filter===stage.key}" @click="selectStage(stage.key)"><strong>{{stage.count}}</strong><span>{{stage.name}}</span></button></section><section class="panel"><div class="panel-head"><div><h2>自动流程看板</h2><p>每个商品按实际数据计算当前位置；点击上方阶段可筛选</p></div><el-button @click="load">刷新</el-button></div><el-empty v-if="!rows.length" description="当前没有流程商品，可从“全部商品”导入 Seerfar 表格"/><div v-else class="automation-list"><article v-for="flow in rows" :key="flow.listing.id" class="automation-card"><div class="automation-title"><div><b>{{flow.listing.base_offer_id}}</b><span>{{flow.listing.title||'等待生成标题'}}</span></div><el-progress type="circle" :percentage="flow.progress" :width="54" :stroke-width="6"/></div><div class="mini-flow"><div v-for="step in flow.steps" :key="step.key" :class="{done:step.completed,current:flow.current.key===step.key}"><i></i><span>{{step.name}}</span></div></div><div class="store-chips"><span v-for="store in flow.listing.stores" :key="store.id"><b>{{store.store_name}}</b> {{statusLabel(store.status)}}</span></div></article></div><el-pagination v-model:current-page="page" :page-size="50" :total="data.pagination?.total||0" layout="prev, pager, next, total" @current-change="load"/></section></div></template>
+

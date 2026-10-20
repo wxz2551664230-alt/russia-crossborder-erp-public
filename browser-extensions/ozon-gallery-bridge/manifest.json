@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "俄罗斯跨境ERP · Ozon图库桥接",
+  "version": "2.1.0",
+  "description": "把程序打开的Ozon商品页公开图库回传到本机俄罗斯跨境ERP。",
+  "permissions": [
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8788/*",
+    "https://ozon.ru/*",
+    "https://www.ozon.ru/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.ozon.ru/product/*",
+        "https://ozon.ru/product/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Ozon图库桥接"
+  },
+  "options_page": "options.html"
+}

@@ -1,0 +1,11 @@
+(() => {
+  const currentUrl = new URL(location.href);
+  const captureRequested = location.hash === '#ozon-gallery-bridge-auto-close' || currentUrl.searchParams.get('__ozon_gallery_bridge') === '1';
+  if (!captureRequested) return;
+  const normalize = raw => {let value=String(raw||'').trim();if(value.startsWith('//'))value=`https:${value}`;if(!/^https:\/\//i.test(value)||!/\/s3\/multimedia/i.test(value))return '';try{const parsed=new URL(value);const host=parsed.hostname.toLowerCase();if(!(host==='ozone.ru'||host.endsWith('.ozone.ru')||host==='ozonstatic.cn'||host.endsWith('.ozonstatic.cn')||host==='ozonusercontent.com'||host.endsWith('.ozonusercontent.com')))return '';parsed.pathname=parsed.pathname.replace(/\/wc\d+\//i,'/wc2000/');return parsed.toString()}catch{return ''}};
+  const imageSource = img => {const choices=String(img.getAttribute('srcset')||'').split(',').map(value=>value.trim().split(/\s+/)[0]).filter(Boolean);return choices.at(-1)||img.currentSrc||img.src||img.getAttribute('data-src')||''};
+  const collect = () => {const match=location.pathname.match(/\/product\/(?:[^/]*-)?(\d{6,})\/?/i);const requestedSku=currentUrl.searchParams.get('__erp_source_sku');const sku=/^\d{6,}$/.test(String(requestedSku||''))?requestedSku:match?.[1];if(!sku)return null;const urls=[];const add=raw=>{const value=normalize(raw);if(value&&!urls.includes(value))urls.push(value)};['[data-widget="webGallery"] img','[data-widget*="Gallery"] img','[data-widget*="gallery"] img'].forEach(selector=>document.querySelectorAll(selector).forEach(img=>add(imageSource(img))));if(!urls.length)document.querySelectorAll('img').forEach(img=>{const rect=img.getBoundingClientRect();if(rect.width>=70&&rect.height>=70)add(imageSource(img))});return {sku,page_url:location.href,auto_close:true,title:document.querySelector('h1')?.innerText?.trim()||document.title,images:urls.slice(0,15)}};
+  let lastSignature='',stableRounds=0,sentSignature='';
+  const capture=()=>{const payload=collect();if(!payload?.images?.length)return;const signature=payload.images.join('|');if(signature===lastSignature)stableRounds+=1;else{lastSignature=signature;stableRounds=0}if(stableRounds<2||signature===sentSignature)return;chrome.runtime.sendMessage({type:'OZON_GALLERY_CAPTURE',payload},response=>{if(response?.ok)sentSignature=signature})};
+  setInterval(capture,1000);capture();
+})();

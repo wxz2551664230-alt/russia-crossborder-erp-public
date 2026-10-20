@@ -1,0 +1,11 @@
+.git
+.venv
+.codex-tmp
+data
+frontend/node_modules
+**/__pycache__
+**/*.pyc
+*.db
+*.log
+.env
+deploy/.env

@@ -1,0 +1,12 @@
+[Unit]
+Description=Back up ERP pilot and verify isolated restore
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+Nice=10
+IOSchedulingClass=idle
+ExecStart=/usr/local/sbin/erp-pilot-backup
+TimeoutStartSec=1800

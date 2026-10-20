@@ -1,0 +1,2 @@
+"""Cross-cutting infrastructure."""
+
